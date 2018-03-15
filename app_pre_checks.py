@@ -2,7 +2,7 @@
 #                                                                                           #
 # Author:  Sanket R Bhimani @ Crest Data System                                             #
 # Date:    4th Mar 2018                                                                     #
-# Version: 1.0                                                                              #
+# Version: 1.2                                                                              #
 # Help:-                                                                                    #
 # python app_pre_checks.py --app-ids 1234,5678 --stack abcd                                 #
 # python app_pre_checks.py -ids 1234,5678 -s abcd                                           #
@@ -25,8 +25,11 @@ from BeautifulSoup import BeautifulSoup as bs
 import re
 import copy
 import urllib3
+import warnings
+warnings.filterwarnings("ignore")
 
-jira_server = "http://jira.splunk.com"
+
+jira_server = "https://jira.splunk.com"
 jira_user = "username"
 jira_password = "password"
 TOKEN = "###"
@@ -158,40 +161,34 @@ for APP_ID in APP_IDSS:
 	else:
 		print " - 1sot:\t* Notavailable *"
 
-
-
-	
 	appcert_f = 0
 
+	try:
 
+		options = {'server': jira_server, 'verify':False}
+		jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
+		query = 'project = APPCERT AND status = Closed AND resolution != "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
+		issues = jira.search_issues(query)
 
-	options = {'server': jira_server}
+		if len(issues) != 0:
+			for issue in issues:
+				print " - APPCERT:\t\t",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
+				appcert_f = 1
 
-	jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
+		query = 'project = APPCERT AND resolution = "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
+		issues = jira.search_issues(query)
 
-	query = 'project = APPCERT AND status = Closed AND resolution != "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
+		if len(issues) != 0:
+			for issue in issues:
+				print " - APPCERT:\t\t*",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__(),"*"
+				appcert_f = 1
 
-	issues = jira.search_issues(query)
+		if appcert_f == 0:
+			print "* Automation failed to find APPCERT JIRA*"
+			appcert_flg = 1
 
-	if len(issues) != 0:
-		for issue in issues:
-			print " - APPCERT:\t\t",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
-			appcert_f = 1
-
-	query = 'project = APPCERT AND resolution = "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
-
-	issues = jira.search_issues(query)
-
-	if len(issues) != 0:
-		for issue in issues:
-			print " - APPCERT:\t\t*",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__(),"*"
-			appcert_f = 1
-
-	if appcert_f == 0:
-		print "* Automation failed to find APPCERT JIRA*"
-		appcert_flg = 1
-
-
+	except:
+		print "*** Splunk AD credentials are incorrect - unable to connect with Splunk JIRA ***"
 
 	if check_on_splunkbase(APP_ID,APP_V):
 		print " - Splunk-Base:\t\tavailable"
@@ -334,6 +331,7 @@ try:
 		print " - Splunk Version:\t",j['attributes']['splunkwhisper']['splunk_version']
 	else:
 		print "Github Error with response code :",result.status
+		print "Check the TOKEN value in app_pre_checks.py file"
 except:
 	print "*** Stack's PO not found on github or some other errors ***"
 stack_available=1
