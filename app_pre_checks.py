@@ -137,7 +137,7 @@ APP_IDSS = []
 for APP_ID in APP_IDS.split(','):
 	APP_V = get_latest_version(APP_ID)
 	if(APP_V == "###"):
-		print "Any version of the app",APP_ID,"is not available on 1shot"
+		print "Any version of the app",APP_ID,"is not available on 1sot"
 	else:
 		print "For app:",APP_ID
 		print "latest version on 1sot is:",APP_V
@@ -361,6 +361,7 @@ if stack_available==1:
 	except:
 		print " - vmware sh: *not available*"
 
+print ""
 print "------------------"
 
 if appcert_flg == 1:
