@@ -80,11 +80,13 @@ def get_latest_version(app_id):
 	_rex = re.compile(regexp)
 	for v in soup.findAll('a', {"href":re.compile(app_id)}):
 		if _rex.search(v.find(text=True)):
-			v_list.append(v.find(text=True))
+			match = re.search(regexp, v.find(text=True))
+			v_list.append(match.group(2))
+			#print match.group(2)
 	if v_list.__len__() != 0:
-		v_list.sort()
-		match = re.search(regexp,v_list[-1], re.DOTALL)	
-		return match.group(2).rstrip()
+		v_list.sort(key=lambda s: map(int, s.split('.')))
+		#match = re.search(regexp,v_list[-1], re.DOTALL)
+		return v_list[-1]
 	else:
 		return "###"
 
