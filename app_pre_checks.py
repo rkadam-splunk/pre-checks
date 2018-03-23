@@ -75,7 +75,7 @@ def get_latest_version(app_id):
 
 	soup = BeautifulSoup(page,"html.parser")
 	v_list =[]
-	regexp = "^("+app_id+"_)((\.|\d)*)(\.zip|\.tgz|\.tar.gz|\.tar|\.spl)$"
+	regexp = "^("+app_id+"_)((\.|\d)*)(\.zip|\.tgz|\.tar\.gz|\.tar|\.spl)$"
 	#print regexp
 	_rex = re.compile(regexp)
 	for v in soup.findAll('a', {"href":re.compile(app_id)}):
@@ -102,19 +102,15 @@ def check_on_splunkbase(app_id,app_v):
 		return False
 
 def check_on_1sot(app_id,app_v):
-	url="/artifactory/splunk-general/prod/apps/"+app_id+"_"+app_v+".tgz"
-	status_code = get_status_code("1sot.splunkcloud.com",url.encode('utf-8'))
+	
 
-
-	if status_code==200:
-		return "tgz"
-	else:
-		url="/artifactory/splunk-general/prod/apps/"+app_id+"_"+app_v+".zip"
+	postfixs = [".zip",".tgz",".tar.gz",".tar",".spl"]
+	for postfix in postfixs:
+		url="/artifactory/splunk-general/prod/apps/"+app_id+"_"+app_v+postfix
 		status_code = get_status_code("1sot.splunkcloud.com",url.encode('utf-8'))
 		if status_code==200:
-			return "zip"
-		else:
-			return "not"
+			return postfix
+	return "not"
 		
 
 
@@ -159,7 +155,7 @@ for APP_ID in APP_IDSS:
 
 	tmp = check_on_1sot(APP_ID,APP_V)
 	if tmp != "not":
-		print " - 1sot:\t\t",APP_ID+"_"+APP_V+"."+tmp
+		print " - 1sot:\t\t",APP_ID+"_"+APP_V+tmp
 	else:
 		print " - 1sot:\t* Notavailable *"
 
@@ -169,7 +165,7 @@ for APP_ID in APP_IDSS:
 
 		options = {'server': jira_server, 'verify':False}
 		jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-		query = 'project = APPCERT AND status = Closed AND resolution != "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
+		query = 'project = APPCERT AND status = Closed AND resolution = "Fixed" AND text ~ "'+APP_ID+' v'+APP_V+'"'
 		issues = jira.search_issues(query)
 
 		if len(issues) != 0:
