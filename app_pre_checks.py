@@ -11,32 +11,27 @@
 #                                                                                           #
 #############################################################################################
 
+import httplib, urllib2, base64, json, sys, argparse, re, copy, urllib3, warnings
+
 from jira.client import JIRA
-import httplib
-import urllib2
-import base64
-import json
 import dns.resolver
 from confluence import Api
-import sys
-import argparse
 from bs4 import BeautifulSoup
 from BeautifulSoup import BeautifulSoup as bs
-import re
-import copy
-import urllib3
-import warnings
+
+from variables import *
+
 warnings.filterwarnings("ignore")
 
 
-jira_server = "https://jira.splunk.com"
-jira_user = "username"
-jira_password = "password"
-TOKEN = "###"
+jira_server = JIRA_SERVER
+jira_user = JIRA_USER
+jira_password = JIRA_PASSWORD
+TOKEN = GITHUB_PERSONAL_ACCESS_TOKEN
 
 page = ""
 try:
-	page = urllib2.urlopen('http://1sot.splunkcloud.com/artifactory/splunk-general/prod/apps/').read()
+	page = urllib2.urlopen(ONESOT_URL).read()
 except:
 	print "Network connectivity check failed. Please ensure that you are connected to splunk VPN"
 	exit(1)
@@ -76,22 +71,19 @@ def get_latest_version(app_id):
 	soup = BeautifulSoup(page,"html.parser")
 	v_list =[]
 	regexp = "^("+app_id+"_)((\.|\d)*)(\.zip|\.tgz|\.tar\.gz|\.tar|\.spl)$"
-	#print regexp
 	_rex = re.compile(regexp)
 	for v in soup.findAll('a', {"href":re.compile(app_id)}):
 		if _rex.search(v.find(text=True)):
 			match = re.search(regexp, v.find(text=True))
 			v_list.append(match.group(2))
-			#print match.group(2)
 	if v_list.__len__() != 0:
 		v_list.sort(key=lambda s: map(int, s.split('.')))
-		#match = re.search(regexp,v_list[-1], re.DOTALL)
 		return v_list[-1]
 	else:
 		return "###"
 
 def check_on_splunkbase(app_id,app_v):
-	page = urllib2.urlopen('https://splunkbase.splunk.com/app/'+app_id+'/')
+	page = urllib2.urlopen(SPLUNKBASE_URL+app_id+'/')
 	soup = bs(page)
 	try:
 		if soup.body.find("option", {"value" : app_v}).find(text=True).strip() != "":
@@ -117,8 +109,6 @@ def check_on_1sot(app_id,app_v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-ids','--app-ids', help='App id', required=True)
-#parser.add_argument('-v','--app-version', help='App version', required=True)
-#parser.add_argument('-jira','--jira-id', help='Jira ticket number', required=False)
 parser.add_argument('-s','--stack', help='Stack name', required=True)
 args = parser.parse_args()
  
@@ -182,7 +172,7 @@ for APP_ID in APP_IDSS:
 				appcert_f = 1
 
 		if appcert_f == 0:
-			print "* Automation failed to find APPCERT JIRA*"
+			print "* Automation failed to find APPCERT JIRA *"
 			appcert_flg = 1
 
 	except:
@@ -194,7 +184,7 @@ for APP_ID in APP_IDSS:
 		print "*** App is not available on Splunk-Base ***"
 
 
-	url = "https://confluence.splunk.com"
+	url = CONFLUENCE_URL
 	api = Api(url, jira_user, jira_password)
 	text = api.getpagecontent("Splunk Cloud Apps Information List","CLOUDOPS")
 	soup = BeautifulSoup(text.encode("utf-8"),"html.parser")
@@ -227,8 +217,6 @@ for APP_ID in APP_IDSS:
 			if allnodes[0].find(text=True) == APP_ID:
 				print " - APP DETAILS"
 				print "\tApp-ID:\t\t",allnodes[0].find(text=True).replace("&nbsp;", "")
-	#			print "\tApp Diretory:\t",allnodes[2].find(text=True).replace("&nbsp;", "")
-	#			print "\tVersion:\t",allnodes[3].find(text=True).replace("&nbsp;", "")
 				sys.stdout.write("\tcan be intalled on: ")
 				if allnodes[4].find(text=True) != None and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
 					sys.stdout.write("sh ")
@@ -239,12 +227,8 @@ for APP_ID in APP_IDSS:
 				if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
 					sys.stdout.write("ufw ")
 				print ""
-	#			if allnodes[8].find(text=True) != None:
-	#				print "\t1sot:\t\t",allnodes[8].find(text=True).replace("&nbsp;", "")
 				if allnodes[12].find(text=True) != None  and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
 					print "\tdependent apps:\t",allnodes[12].find(text=True).replace("&nbsp;", "")
-				#if allnodes[13].find(text=True) != None:
-				#	print "\tNote:\t\t",allnodes[13].find(text=True).replace("&nbsp;", "")
 				if allnodes[12].find(text=True) != None:
 					ids = allnodes[12].find(text=True).replace("&nbsp;", "")
 	else:
@@ -259,8 +243,6 @@ for APP_ID in APP_IDSS:
 				if allnodes[0].find(text=True) == _id:
 					print " - APP DETAILS for dependent app ",_id
 					print "\tApp-ID:\t\t",allnodes[0].find(text=True).replace("&nbsp;", "")
-	#				print "\tApp Diretory:\t",allnodes[2].find(text=True).replace("&nbsp;", "")
-	#				print "\tVersion:\t",allnodes[3].find(text=True).replace("&nbsp;", "")
 					sys.stdout.write("\tcan be intalled on: ")
 					if allnodes[4].find(text=True) != None  and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
 						sys.stdout.write("sh ")
@@ -271,12 +253,8 @@ for APP_ID in APP_IDSS:
 					if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
 						sys.stdout.write("ufw ")
 					print ""
-	#				if allnodes[8].find(text=True) != None:
-	#					print "\t1sot:\t\t",allnodes[8].find(text=True).replace("&nbsp;", "")
 					if allnodes[12].find(text=True) != None and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
 						print "\tdependent apps:\t",allnodes[12].find(text=True).replace("&nbsp;", "")
-					#if allnodes[13].find(text=True) != None:
-					#	print "\tNote:\t",allnodes[13].find(text=True).replace("&nbsp;", "")
 					_v = get_latest_version(_id)
 					print "\tlatest version:\t"+_v
 					if check_on_splunkbase(_id,_v):
