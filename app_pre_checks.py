@@ -147,7 +147,7 @@ for APP_ID in APP_IDSS:
 	if tmp != "not":
 		print " - 1sot:\t\t",APP_ID+"_"+APP_V+tmp
 	else:
-		print " - 1sot:\t* Notavailable *"
+		print " - 1sot:\t*Notavailable*"
 
 	appcert_f = 0
 
@@ -163,25 +163,25 @@ for APP_ID in APP_IDSS:
 				print " - APPCERT:\t\t",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
 				appcert_f = 1
 
-		query = 'project = APPCERT AND resolution = "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
-		issues = jira.search_issues(query)
+#		query = 'project = APPCERT AND resolution = "Won\'t Fix" AND text ~ "'+APP_ID+' v'+APP_V+'"'
+#		issues = jira.search_issues(query)
 
-		if len(issues) != 0:
-			for issue in issues:
-				print " - APPCERT:\t\t*",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__(),"*"
-				appcert_f = 1
+#		if len(issues) != 0:
+#			for issue in issues:
+#				print " - APPCERT:\t\t*",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__(),"*"
+#				appcert_f = 1
 
 		if appcert_f == 0:
-			print "* Automation failed to find APPCERT JIRA *"
+			print "*Automation failed to find APPCERT JIRA*"
 			appcert_flg = 1
 
 	except:
-		print "*** Splunk AD credentials are incorrect - unable to connect with Splunk JIRA ***"
+		print "***Splunk AD credentials are incorrect - unable to connect with Splunk JIRA***"
 
 	if check_on_splunkbase(APP_ID,APP_V):
 		print " - Splunk-Base:\t\tavailable"
 	else:
-		print "*** App is not available on Splunk-Base ***"
+		print "***App is not available on Splunk-Base***"
 
 
 	url = CONFLUENCE_URL
@@ -260,12 +260,12 @@ for APP_ID in APP_IDSS:
 					if check_on_splunkbase(_id,_v):
 						print "\tSplunk-Base:\tavailable"
 					else:
-						print "\tSplunk-Base:\t* Not available *"
+						print "\tSplunk-Base:\t*Not available*"
 					tmp = check_on_1sot(_id,_v)
 					if tmp != "not":
 						print "\t1sot:\t\t",_id+"_"+_v+"."+tmp
 					else:
-						print "\t1sot:\t* Not available *"
+						print "\t1sot:\t*Not available*"
 
 					appcert_f = 0
 					options = {'server': jira_server}
@@ -283,7 +283,7 @@ for APP_ID in APP_IDSS:
 							print "\tAPPCERT:\t",issue.__str__()+", status: "+issue.fields.status+", resolution: ", issue.fields.resolution
 							appcert_f = 1
 					if appcert_f == 0:
-						print "\t* Automation failed to find APPCERT JIRA for dependent app",_id,"*"
+						print "\t*Automation failed to find APPCERT JIRA for dependent app",_id+"*"
 		else:
 			print "*dependent app is not available on confluence page*"
 	print "\n------------------"
@@ -309,13 +309,13 @@ try:
 		print "Github Error with response code :",result.status
 		print "Check the TOKEN value in app_pre_checks.py file"
 except:
-	print "*** Stack's PO not found on github or some other errors ***"
+	print "***Run the script with sudo or Stack's PO not found on GitHub***"
 stack_available=1
 try:
 	answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
 	print " - adhoc sh:\t", answers[0].target
 except:
-	print "*** stack is not available ***"
+	print "***stack is not available***"
 	stack_available=0
 
 if stack_available==1:
