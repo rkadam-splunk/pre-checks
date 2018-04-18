@@ -8,10 +8,10 @@ Most of the Maintenance Windows we get are mostly of App installations. One of t
 
 The setup of the automation involves 4 files:
 
-    1. `setup.sh`, the script for installation of the dependencies required for the script to work.
-    2. `app_pre_checks.py` the main script for the automation, which performs all the pre-checks.
-    3. `api.github.com.pem` the key required for communication with GitHub. **DO NOT DELETE**. Ensure that this file and the `app_pre_checks.py` exist in the same location.
-    4. `variables.py` the script for providing the variables required for the automation. The SRE will provide the required credentials here.
+1. `setup.sh`, the script for installation of the dependencies required for the script to work.
+2. `app_pre_checks.py` the main script for the automation, which performs all the pre-checks.
+3. `api.github.com.pem` the key required for communication with GitHub. **DO NOT DELETE**. Ensure that this file and the `app_pre_checks.py` exist in the same location.
+4. `variables.py` the script for providing the variables required for the automation. The SRE will provide the required credentials here.
 
 The steps for getting started with the automation is as follows:
 
