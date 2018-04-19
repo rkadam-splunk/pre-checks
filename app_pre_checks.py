@@ -293,7 +293,7 @@ print " - stack:\t\t",STACK
 content = ""
 try:
 	urllib3.contrib.pyopenssl.inject_into_urllib3()
-#	urllib3.disable_warnings()
+	urllib3.disable_warnings()
 	user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
 	http = urllib3.PoolManager(10, headers=user_agent)
 
