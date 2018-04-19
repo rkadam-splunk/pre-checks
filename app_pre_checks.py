@@ -11,7 +11,7 @@
 #                                                                                           #
 #############################################################################################
 
-import httplib, urllib2, base64, json, sys, argparse, re, copy, urllib3, warnings
+import getpass, httplib, urllib2, base64, json, sys, argparse, re, copy, urllib3, warnings
 
 from jira.client import JIRA
 import dns.resolver
@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore")
 
 jira_server = JIRA_SERVER
 jira_user = JIRA_USER
-jira_password = JIRA_PASSWORD
+jira_password = getpass.getpass(prompt='Enter JIRA Password : ')
 TOKEN = GITHUB_PERSONAL_ACCESS_TOKEN
 
 page = ""
@@ -293,7 +293,7 @@ print " - stack:\t\t",STACK
 content = ""
 try:
 	urllib3.contrib.pyopenssl.inject_into_urllib3()
-	urllib3.disable_warnings()
+#	urllib3.disable_warnings()
 	user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
 	http = urllib3.PoolManager(10, headers=user_agent)
 
