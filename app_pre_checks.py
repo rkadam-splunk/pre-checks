@@ -263,7 +263,7 @@ for APP_ID in APP_IDSS:
 						print "\tSplunk-Base:\t*Not available*"
 					tmp = check_on_1sot(_id,_v)
 					if tmp != "not":
-						print "\t1sot:\t\t",_id+"_"+_v+"."+tmp
+						print "\t1sot:\t\t",_id+"_"+_v+tmp
 					else:
 						print "\t1sot:\t*Not available*"
 
