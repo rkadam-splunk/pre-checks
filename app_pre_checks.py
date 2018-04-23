@@ -348,7 +348,7 @@ print "------------------"
 
 if appcert_flg == 1:
 	print "Gone through below JIRA to get the remaining APPCERT JIRA"
-	sys.stdout.write("Enter the issue JIRA ID: ")
+	sys.stdout.write("Enter the issue CO JIRA ID: ")
 	JIRA_ID = raw_input()
 	issue = jira.issue(JIRA_ID)
 
