@@ -11,7 +11,7 @@
 #                                                                                           #
 #############################################################################################
 
-import getpass, httplib, urllib2, base64, json, sys, argparse, re, copy, urllib3, warnings
+import httplib, urllib2, base64, json, sys, argparse, re, copy, urllib3, warnings
 
 from jira.client import JIRA
 import dns.resolver
@@ -26,7 +26,7 @@ warnings.filterwarnings("ignore")
 
 jira_server = JIRA_SERVER
 jira_user = JIRA_USER
-jira_password = getpass.getpass(prompt='Enter JIRA Password : ')
+jira_password = JIRA_PASSWORD
 TOKEN = GITHUB_PERSONAL_ACCESS_TOKEN
 
 page = ""
