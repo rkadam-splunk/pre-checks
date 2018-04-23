@@ -324,6 +324,12 @@ if stack_available==1:
 		print " - es sh:\t", answers[0].target
 	except:
 		print " - es sh: *not available*"
+	
+	try:
+		answers = dns.resolver.query('pci-'+STACK+'.splunkcloud.com', 'CNAME')
+		print " - pci sh:\t", answers[0].target
+	except:
+		print " - pci sh: *not available*"
 
 	try:
 		answers = dns.resolver.query('itsi-'+STACK+'.splunkcloud.com', 'CNAME')
