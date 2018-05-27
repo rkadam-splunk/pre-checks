@@ -1,8 +1,10 @@
 JIRA_SERVER = "https://jira.splunk.com"
-JIRA_USER = "YOUR_USERNAME"
-JIRA_PASSWORD = "YOUR_PASSWORD"
+CONFLUENCE_URL = "https://confluence.splunk.com"
+AD_USER = "flastname"
+AD_PASSWORD = "ad_password"
 
-GITHUB_PERSONAL_ACCESS_TOKEN = "YOUR_TOKEN"
+GITHUB_PERSONAL_ACCESS_TOKEN = "github_token_with read_access"
+ANSIBLE_VAULT = "vault_secret"
 
 ONESOT_URL = "http://1sot.splunkcloud.com/artifactory/splunk-general/prod/apps/"
 
