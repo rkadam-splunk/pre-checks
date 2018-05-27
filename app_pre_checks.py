@@ -258,34 +258,34 @@ def main():
 	print "*+Pre-checks for stack+*"
 	print " - stack: ",STACK
 	content = ""
-	try:
-		urllib3.contrib.pyopenssl.inject_into_urllib3()
-		urllib3.disable_warnings()
-		user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
-		http = urllib3.PoolManager(10, headers=user_agent)
+	#try:
+	urllib3.contrib.pyopenssl.inject_into_urllib3()
+	urllib3.disable_warnings()
+	user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
+	http = urllib3.PoolManager(10, headers=user_agent)
 
-		url = 'https://api.github.com/repos/SplunkStorm/stax/contents/'+STACK+'.json?access_token='+TOKEN
-		result = http.request("GET",url)
-		if result.status == 200:
-			req = json.loads(result.data)
-			content = base64.decodestring(req['content'])
-			j = json.loads(content)
-			print " - Splunk Account: ",j['attributes']['cloud_vendor']['account']
-			print " - Splunk Version: ",j['attributes']['splunkwhisper']['splunk_version']
-			print " - Is the stack CloudWorks: *No*"
-			IS_CW = 0
-		elif result.status == 404:
-			adhoc_sh = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')[0].target[0]
-			sh_id = dns.resolver.query(adhoc_sh+'.'+STACK+'.splunkcloud.com', 'CNAME')[0].target.__str__()
-			if "sh" in sh_id:
-				IS_CW = 1
-				print " - Is the stack CloudWorks: *Yes*" 
-			else:
-				print "*Stack is not available*"
+	url = 'https://api.github.com/repos/SplunkStorm/stax/contents/'+STACK+'.json?access_token='+TOKEN
+	result = http.request("GET",url)
+	if result.status == 200:
+		req = json.loads(result.data)
+		content = base64.decodestring(req['content'])
+		j = json.loads(content)
+		print " - Splunk Account: ",j['attributes']['cloud_vendor']['account']
+		print " - Splunk Version: ",j['attributes']['splunkwhisper']['splunk_version']
+		print " - Is the stack CloudWorks: *No*"
+		IS_CW = 0
+	elif result.status == 404:
+		adhoc_sh = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')[0].target[0]
+		sh_id = dns.resolver.query(adhoc_sh+'.'+STACK+'.splunkcloud.com', 'CNAME')[0].target.__str__()
+		if "sh" in sh_id:
+			IS_CW = 1
+			print " - Is the stack CloudWorks: *Yes*" 
 		else:
-			print "Github Error with response code :*"+result.status+"*"
-	except:
-		print "Github Error: *Run the script with sudo* or invalid stack name or check the token value in variables.py"
+			print "*Stack is not available*"
+	else:
+		print "Github Error with response code :*"+result.status.__str__()+"*"
+	#except:
+	#	print "Github Error: *Run the script with sudo* or invalid stack name or check the token value in variables.py"
 
 	if PASSWORD != "###":  
 		sf,rf = check_SF_RF()
@@ -457,12 +457,12 @@ def main():
 							print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
 						if PASSWORD != "###":
 							folder_name = get_app_folder_name(APP_ID+"_"+APP_V+tmp)
-							print " - App directory name: ",folder_name
+							print "\tApp directory name: ",folder_name
 							installed,restart_req,current_ver = get_install_status(folder_name)
 							if installed == "yes":
 								print "\t*The app "+APP_ID+" is already installed with "+current_ver+" version.*"
 							else:
-								print " - Is it already installed: No"
+								print "\tIs it already installed: No"
 
 						appcert_f = 0
 						options = {'server': jira_server}
@@ -505,8 +505,8 @@ try:
 except:
 	print "Network connectivity check failed. Please ensure that you are connected to splunk VPN"
 	exit(1)
-try:
-	main()
-	print "\nYou are welcome! :)"
-except:
-	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
+#try:
+main()
+print "\nYou are welcome! :)"
+#except:
+#	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
