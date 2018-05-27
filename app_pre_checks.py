@@ -12,7 +12,7 @@
 #############################################################################################
 
 import urllib, urllib2, urllib3, base64, json, sys, argparse, re, copy, warnings, os
-from ansible_vault import Vault
+i
 from jira.client import JIRA
 import dns.resolver, tarfile
 from confluence import Api
@@ -171,7 +171,7 @@ def get_stack_password():
 			result = http.request("GET",url)
 			if result.status == 200:
 				req = json.loads(result.data)
-				content = base64.decodestring(req['content'])
+				content = base64.decodestring(p)
 				_pass = vault.load(content)['stack_password']
 				return _pass
 			else:
@@ -258,34 +258,34 @@ def main():
 	print "*+Pre-checks for stack+*"
 	print " - stack: ",STACK
 	content = ""
-	#try:
-	urllib3.contrib.pyopenssl.inject_into_urllib3()
-	urllib3.disable_warnings()
-	user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
-	http = urllib3.PoolManager(10, headers=user_agent)
+	try:
+		urllib3.contrib.pyopenssl.inject_into_urllib3()
+		urllib3.disable_warnings()
+		user_agent = {'user-agent': 'Mozilla/5.0 (Windows NT 6.3; rv:36.0) ..'}
+		http = urllib3.PoolManager(10, headers=user_agent)
 
-	url = 'https://api.github.com/repos/SplunkStorm/stax/contents/'+STACK+'.json?access_token='+TOKEN
-	result = http.request("GET",url)
-	if result.status == 200:
-		req = json.loads(result.data)
-		content = base64.decodestring(req['content'])
-		j = json.loads(content)
-		print " - Splunk Account: ",j['attributes']['cloud_vendor']['account']
-		print " - Splunk Version: ",j['attributes']['splunkwhisper']['splunk_version']
-		print " - Is the stack CloudWorks: *No*"
-		IS_CW = 0
-	elif result.status == 404:
-		adhoc_sh = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')[0].target[0]
-		sh_id = dns.resolver.query(adhoc_sh+'.'+STACK+'.splunkcloud.com', 'CNAME')[0].target.__str__()
-		if "sh" in sh_id:
-			IS_CW = 1
-			print " - Is the stack CloudWorks: *Yes*" 
+		url = 'https://api.github.com/repos/SplunkStorm/stax/contents/'+STACK+'.json?access_token='+TOKEN
+		result = http.request("GET",url)
+		if result.status == 200:
+			req = json.loads(result.data)
+			content = base64.decodestring(req['content'])
+			j = json.loads(content)
+			print " - Splunk Account: ",j['attributes']['cloud_vendor']['account']
+			print " - Splunk Version: ",j['attributes']['splunkwhisper']['splunk_version']
+			print " - Is the stack CloudWorks: *No*"
+			IS_CW = 0
+		elif result.status == 404:
+			adhoc_sh = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')[0].target[0]
+			sh_id = dns.resolver.query(adhoc_sh+'.'+STACK+'.splunkcloud.com', 'CNAME')[0].target.__str__()
+			if "sh" in sh_id:
+				IS_CW = 1
+				print " - Is the stack CloudWorks: *Yes*" 
+			else:
+				print "*Stack is not available*"
 		else:
-			print "*Stack is not available*"
-	else:
-		print "Github Error with response code :*"+result.status.__str__()+"*"
-	#except:
-	#	print "Github Error: *Run the script with sudo* or invalid stack name or check the token value in variables.py"
+			print "Github Error with response code :*"+result.status.__str__()+"*"
+	except:
+		print "Github Error: *Run the script with sudo* or invalid stack name or check the token value in variables.py"
 
 	if PASSWORD != "###":  
 		sf,rf = check_SF_RF()
