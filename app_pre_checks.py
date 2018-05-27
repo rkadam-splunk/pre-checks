@@ -285,7 +285,7 @@ def main():
 		else:
 			print "Github Error with response code :*"+result.status+"*"
 	except:
-		print "Github Error: *Run the script with sudo* or invalid stack name"
+		print "Github Error: *Run the script with sudo* or invalid stack name or check the token value in variables.py"
 
 	if PASSWORD != "###":  
 		sf,rf = check_SF_RF()
