@@ -12,7 +12,7 @@
 #############################################################################################
 
 import urllib, urllib2, urllib3, base64, json, sys, argparse, re, copy, warnings, os
-i
+from ansible_vault import Vault
 from jira.client import JIRA
 import dns.resolver, tarfile
 from confluence import Api
