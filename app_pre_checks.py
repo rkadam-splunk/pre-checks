@@ -506,8 +506,8 @@ try:
 except:
 	print "Network connectivity check failed. Please ensure that you are connected to splunk VPN"
 	exit(1)
-#try:
-main()
-print "\nYou are welcome! :)"
-#except:
-#	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
+try:
+	main()
+	print "\nYou are welcome! :)"
+except:
+	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
