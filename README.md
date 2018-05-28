@@ -15,9 +15,8 @@ The setup of the automation involves 4 files:
 The steps for getting started with the automation is as follows:
 
 1. Run `setup.sh` for the first time for installing the dependencies.
-2. Ensure that the app_pre_checks.py are provided `+x` permission.
-3. Provide your credentials (`JIRA_USER`,`JIRA_PASSWORD`,`GITHUB_PERSONAL_ACCESS_TOKEN`) in the `variables.py` file.
-4. Run the `app_pre_checks.py` as follows:
+2. Provide your credentials (`AD_USER`,`AD_PASSWORD`,`GITHUB_PERSONAL_ACCESS_TOKEN`,`ANSIBLE_VAULT`) in the `variables.py` file.
+3. Run the `app_pre_checks.py` as follows:
 
     ```
         $ sudo python app_pre_checks.py -i <SPLUNKBASE_APP_IDS> -s <STACK_ID>
