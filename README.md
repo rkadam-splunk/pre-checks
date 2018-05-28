@@ -22,7 +22,7 @@ The steps for getting started with the automation is as follows:
     ```
         $ sudo python app_pre_checks.py -i <SPLUNKBASE_APP_IDS> -s <STACK_ID>
         Ex:
-            $ sudo python app_pre_checks.py -i 1234,2345,3456 -s splunkjusteat
+            $ sudo python app_pre_checks.py -i 1234,2345,3456 -s dt
     ```
     This will generate the output of the prechecks **pre-formatted** so that it can be pasted directly in the JIRA
 
