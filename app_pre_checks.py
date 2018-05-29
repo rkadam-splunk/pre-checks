@@ -223,28 +223,31 @@ def check_SF_RF():
 		return "ERROR","ERROR"
 
 def get_install_status(folder_name,sh):
-	url = "https://internal-"+sh+"."+STACK+".splunkcloud.com"+":8089/services/apps/local/"+folder_name+"?output_mode=json"
-	#print url
-	urllib3.contrib.pyopenssl.inject_into_urllib3()
-	urllib3.disable_warnings()
-	headers = urllib3.util.make_headers(basic_auth=USERNAME+':'+PASSWORD)
-	http = urllib3.PoolManager(10, headers=headers)
+	try:
+		url = "https://internal-"+sh+"."+STACK+".splunkcloud.com"+":8089/services/apps/local/"+folder_name+"?output_mode=json"
+		#print url
+		urllib3.contrib.pyopenssl.inject_into_urllib3()
+		urllib3.disable_warnings()
+		headers = urllib3.util.make_headers(basic_auth=USERNAME+':'+PASSWORD)
+		http = urllib3.PoolManager(10, headers=headers)
 
-	result = http.request("GET",url)
-	#print result.data
-	if result.status == 200:
-		res = json.loads(result.data)
-		installed = 'yes'
-		restart_req = res[u'entry'][0][u'content'][u'state_change_requires_restart'].__str__()
-		current_ver = res[u'entry'][0][u'content'][u'version'].__str__()
-		return installed,restart_req,current_ver
-	elif result.status == 401:
-		return "ERROR_auth","ERROR_auth","ERROR_auth"
-	elif result.status == 404:
-		return "ERROR_404","ERROR_404","ERROR_404"
-	else:
+		result = http.request("GET",url)
+		#print result.data
+		if result.status == 200:
+			res = json.loads(result.data)
+			installed = 'yes'
+			restart_req = res[u'entry'][0][u'content'][u'state_change_requires_restart'].__str__()
+			current_ver = res[u'entry'][0][u'content'][u'version'].__str__()
+			return installed,restart_req,current_ver
+		elif result.status == 401:
+			return "ERROR_auth","ERROR_auth","ERROR_auth"
+		elif result.status == 404:
+			return "ERROR_404","ERROR_404","ERROR_404"
+		else:
+			return "ERROR","ERROR","ERROR"
+	except:
+		print "Internal DNS entry invalid: internal-"+sh+"."+STACK+".splunkcloud.com or 8089 port is not UP"
 		return "ERROR","ERROR","ERROR"
-
 def main():
 	if APP_IDS != None:
 		for APP_ID in APP_IDS.split(','):
@@ -304,8 +307,11 @@ def main():
 	stack_available=1
 	try:
 		answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
-		print " - adhoc sh: ", answers[0].target
-		SHs['adhoc'] = answers[0].target[0]
+		if "shc" not in answers[0].target[0]:
+			print " - adhoc sh: ", answers[0].target
+			SHs['adhoc'] = answers[0].target[0]
+		else:
+			print "*"+STACK+'.splunkcloud.com '+"is pointing to SHC*"
 	except:
 		print "*"+STACK+'.splunkcloud.com '+"DNS is not available*"
 		stack_available=0
