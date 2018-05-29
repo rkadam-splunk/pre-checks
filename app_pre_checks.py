@@ -372,7 +372,7 @@ def main():
 					print " - App directory name: ",folder_name
 					installed,restart_req,current_ver = get_install_status(folder_name)
 					if installed == "yes":
-						print " - *The app "+APP_ID+" is already installed with "+current_ver+" version.*"
+						print " - *The app "+APP_ID+" is already installed on ad-hoc SH with "+current_ver+" version.*"
 					else:
 						print " - Is it already installed: No"
 			url = CONFLUENCE_URL
@@ -465,7 +465,7 @@ def main():
 									print "\tApp directory name: ",folder_name
 									installed,restart_req,current_ver = get_install_status(folder_name)
 									if installed == "yes":
-										print "\t*The app "+_id+" is already installed with "+current_ver+" version.*"
+										print "\t*The app "+_id+" is already installed on ad-hoc SH with "+current_ver+" version.*"
 									else:
 										print "\tIs it already installed: No"
 
