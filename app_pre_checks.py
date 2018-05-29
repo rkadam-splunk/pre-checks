@@ -199,8 +199,8 @@ def check_SF_RF():
 	result = http.request("GET",url)
 	if result.status == 200:
 		res = json.loads(result.data)
-		sf = res[u'entry'][0][u'content'][u'replication_factor_met'].__str__()
-		rf = res[u'entry'][0][u'content'][u'search_factor_met'].__str__()
+		rf = res[u'entry'][0][u'content'][u'replication_factor_met'].__str__()
+		sf = res[u'entry'][0][u'content'][u'search_factor_met'].__str__()
 		if sf == '1':
 			sf = "True"
 		else:
