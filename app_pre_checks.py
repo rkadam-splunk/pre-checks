@@ -35,6 +35,8 @@ STACK=args.stack
 JIRA_ID=""
 APP_IDSS = []
 
+SHs = {}
+
 jira_server = JIRA_SERVER
 jira_user = AD_USER
 jira_password = AD_PASSWORD
@@ -111,12 +113,14 @@ def get_app_folder_name(app_filename):
 			folder_name = os.path.commonprefix(tar.getnames())
 			if folder_name[-1:] == '/':
 				folder_name = folder_name[:-1]
-			os.remove(app_filename)
+			if os.path.isfile(app_filename):
+				os.remove(app_filename)
 			return folder_name
 		else:
 			return "ERROR_big_file"
 	except:
-		os.remove(app_filename)
+		if os.path.isfile(app_filename):
+			os.remove(app_filename)
 
 def query_yes_no(question, default="yes"):
 	valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
@@ -140,15 +144,18 @@ def query_yes_no(question, default="yes"):
 
 def check_on_splunkbase(app_id,app_v):
 	page = urllib2.urlopen(SPLUNKBASE_URL+app_id+'/')
-	soup = bs(page)
-	splunk_var = ""
-	if soup.body.find("option", {"value" : app_v}).find(text=True).strip() != "":
-		for obj in soup.body.findAll("sb-release-select", {"sb-target" : app_v}):
-			if "Splunk Versions:" in obj.find(text=True):
-				for a_tag in obj.findAll('a'):
-					if a_tag!= None and a_tag.find(text=True).strip() != "":
-						splunk_var += a_tag.find(text=True)+", "
-		return splunk_var[:-2]
+	if page.code.__str__() == "200":
+		soup = bs(page)
+		splunk_var = ""
+		if soup.body.find("option", {"value" : app_v}) != None and soup.body.find("option", {"value" : app_v}).find(text=True).strip() != "":
+			for obj in soup.body.findAll("sb-release-select", {"sb-target" : app_v}):
+				if "Splunk Versions:" in obj.find(text=True):
+					for a_tag in obj.findAll('a'):
+						if a_tag!= None and a_tag.find(text=True).strip() != "":
+							splunk_var += a_tag.find(text=True)+", "
+			return splunk_var[:-2]
+		else:
+			return "ERROR_404"
 	else:
 		return "ERROR_404"
 
@@ -215,9 +222,8 @@ def check_SF_RF():
 	else:
 		return "ERROR","ERROR"
 
-def get_install_status(folder_name):
-	answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
-	url = "https://internal-"+answers[0].target.__str__()[:-1]+":8089/services/apps/local/"+folder_name+"?output_mode=json"
+def get_install_status(folder_name,sh):
+	url = "https://internal-"+sh+"."+STACK+".splunkcloud.com"+":8089/services/apps/local/"+folder_name+"?output_mode=json"
 	#print url
 	urllib3.contrib.pyopenssl.inject_into_urllib3()
 	urllib3.disable_warnings()
@@ -299,6 +305,7 @@ def main():
 	try:
 		answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
 		print " - adhoc sh: ", answers[0].target
+		SHs['adhoc'] = answers[0].target[0]
 	except:
 		print "*"+STACK+'.splunkcloud.com '+"DNS is not available*"
 		stack_available=0
@@ -307,24 +314,28 @@ def main():
 		try:
 			answers = dns.resolver.query('es-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - es sh: ", answers[0].target
+			SHs['es'] = answers[0].target[0]
 		except:
 			print " - es sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('itsi-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - itsi sh: ", answers[0].target
+			SHs['itsi'] = answers[0].target[0]
 		except:
 			print " - itsi sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('vmware-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - vmware sh:", answers[0].target
+			SHs['vmware'] = answers[0].target[0]
 		except:
 			print " - vmware sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('pci-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - pci sh:", answers[0].target
+			SHs['pci'] = answers[0].target[0]
 		except:
 			print " - pci sh: *DNS not available*"
 
@@ -370,11 +381,11 @@ def main():
 				folder_name = get_app_folder_name(APP_ID+"_"+APP_V+tmp)
 				if "ERROR" not in folder_name:
 					print " - App directory name: ",folder_name
-					installed,restart_req,current_ver = get_install_status(folder_name)
-					if installed == "yes":
-						print " - *The app "+APP_ID+" is already installed on ad-hoc SH with "+current_ver+" version.*"
-					else:
-						print " - Is it already installed: No"
+					for key, value in SHs.iteritems():
+						installed,restart_req,current_ver = get_install_status(folder_name,value)
+						if installed == "yes":
+							print " - *The app "+APP_ID+" is already installed on "+key+" SH with "+current_ver+" version.*"
+
 			url = CONFLUENCE_URL
 			api = Api(url, jira_user, jira_password)
 			text = api.getpagecontent("Splunk Cloud Apps Information List","CLOUDOPS")
