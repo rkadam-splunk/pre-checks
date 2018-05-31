@@ -35,6 +35,8 @@ STACK=args.stack
 JIRA_ID=""
 APP_IDSS = []
 
+ERROR = []
+
 SHs = {}
 
 jira_server = JIRA_SERVER
@@ -122,7 +124,23 @@ def get_app_folder_name(app_filename):
 		if os.path.isfile(app_filename):
 			os.remove(app_filename)
 
-def query_yes_no(question, default="yes"):
+def self_service_check(app_id):
+    url = "https://splunkbase.splunk.com/api/v1/app/"+app_id.__str__()+"/?include=release,release.splunk_compatibility"
+    urllib3.contrib.pyopenssl.inject_into_urllib3()
+    urllib3.disable_warnings()
+    http = urllib3.PoolManager(10)
+    result = http.request("GET",url)
+    _app_name = ""
+    _method = ""
+    if result.status == 200:
+        res = json.loads(result.data)
+        _app_name = res["appid"].__str__()
+        _method = res["install_method_distributed"].__str__()
+        return _app_name,_method
+    else:
+        return "ERROR","ERROR"
+
+def query_yes_no(question, default="no"):
 	valid = {"yes": True, "y": True, "ye": True, "no": False, "n": False}
 	if default is None:
 		prompt = " [y/n] "
@@ -248,7 +266,10 @@ def get_install_status(folder_name,sh):
 	except:
 		print "Internal DNS entry invalid: internal-"+sh+"."+STACK+".splunkcloud.com or 8089 port is not UP"
 		return "ERROR","ERROR","ERROR"
+
 def main():
+	global IS_CW
+	global JIRA_ID
 	if APP_IDS != None:
 		for APP_ID in APP_IDS.split(','):
 			APP_V = get_latest_version(APP_ID)
@@ -304,6 +325,9 @@ def main():
 		print " - Search Factor: ",sf
 		print " - Replication Factor: ",rf
 
+		if sf == "False" or rf == "False":
+			ERROR.append("SF/RF")
+
 	stack_available=1
 	try:
 		answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
@@ -314,6 +338,7 @@ def main():
 			print "*"+STACK+'.splunkcloud.com '+"is pointing to SHC*"
 	except:
 		print "*"+STACK+'.splunkcloud.com '+"DNS is not available*"
+		ERROR.append("STACK")
 		stack_available=0
 
 	if stack_available==1:
@@ -345,6 +370,12 @@ def main():
 		except:
 			print " - pci sh: *DNS not available*"
 
+		try:
+			answers = dns.resolver.query('exchange-'+STACK+'.splunkcloud.com', 'CNAME')
+			print " - exchange sh:", answers[0].target
+			SHs['exchange'] = answers[0].target[0]
+		except:
+			print " - exchange sh: *DNS not available*"
 	print ""
 
 
@@ -361,6 +392,7 @@ def main():
 				print " - 1sot: ",APP_ID+"_"+APP_V+tmp
 			else:
 				print " - The app "+APP_ID+" v"+APP_V+" is not available on 1sot"
+				ERROR.append("1SOT")
 
 			appcert_f = 0
 
@@ -376,6 +408,7 @@ def main():
 
 			if appcert_f == 0:
 				print "*Automation failed to find APPCERT JIRA*"
+				ERROR.append("APPCERT")
 				appcert_flg = 1
 			splunkbase = check_on_splunkbase(APP_ID,APP_V)
 			if splunkbase != "ERROR_404":
@@ -383,14 +416,28 @@ def main():
 				print " - Supported Splunk versions: ",splunkbase
 			else:
 				print " - The app "+APP_ID+" v"+APP_V+" is not available on Splunk-Base"
-			if PASSWORD != "###":
-				folder_name = get_app_folder_name(APP_ID+"_"+APP_V+tmp)
+			folder_name, _status = self_service_check(APP_ID)
+			if "ERROR" not in _status:
+				if _status == "appmgmt_phase":
+					print " - *The app supports self-service installation"
+				elif _status == "assisted":
+					print " - self-service installation: No"
+				elif _status == "unknown":
+					print " - *This app is not yet vetted to install on Splunk Cloud*"
+				elif _status == "rejected":
+					print " - *This app is not yet vetted to install on Splunk Cloud*"
+			if PASSWORD != "###":				
+				#folder_name = get_app_folder_name(APP_ID+"_"+APP_V+tmp)
 				if "ERROR" not in folder_name:
 					print " - App directory name: ",folder_name
 					for key, value in SHs.iteritems():
 						installed,restart_req,current_ver = get_install_status(folder_name,value)
 						if installed == "yes":
 							print " - *The app "+APP_ID+" is already installed on "+key+" SH with "+current_ver+" version.*"
+							print " - need Splunk restart after installation: "+restart_req
+						else:
+							print " - Is it already installed on "+key+" SH: No"
+				
 
 			url = CONFLUENCE_URL
 			api = Api(url, jira_user, jira_password)
@@ -477,14 +524,25 @@ def main():
 							else:
 								print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
 							if PASSWORD != "###":
-								folder_name = get_app_folder_name(_id+"_"+_v+tmp)
+								folder_name, _status = self_service_check(APP_ID)
+								if "ERROR" not in _status:
+									if _status == "appmgmt_phase":
+										print "\t*The app supports self-service installation"
+									elif _status == "assisted":
+										print "\tself-service installation: No"
+									elif _status == "unknown":
+										print "\t*This app is not yet vetted to install on Splunk Cloud*"
+									elif _status == "rejected":
+										print "\t*This app is not yet vetted to install on Splunk Cloud*"
 								if "ERROR" not in folder_name:
 									print "\tApp directory name: ",folder_name
-									installed,restart_req,current_ver = get_install_status(folder_name)
-									if installed == "yes":
-										print "\t*The app "+_id+" is already installed on ad-hoc SH with "+current_ver+" version.*"
-									else:
-										print "\tIs it already installed: No"
+									for key, value in SHs.iteritems():
+										installed,restart_req,current_ver = get_install_status(folder_name,value)
+										if installed == "yes":
+											print "\t*The app "+_id+" is already installed on "+key+" SH with "+current_ver+" version.*"
+											print "\tneed Splunk restart after installation: "+restart_req
+										else:
+											print "\tIs it already installed on "+key+" SH: No"
 
 							appcert_f = 0
 							options = {'server': jira_server}
@@ -503,7 +561,7 @@ def main():
 
 		if appcert_flg == 1:
 			print "Gone through below JIRA to get the remaining APPCERT JIRA"
-			sys.stdout.write("Enter the issue app install JIRA ID: ")
+			sys.stdout.write("Enter the issue app install JIRA ID (CO-12345): ")
 			JIRA_ID = raw_input()
 			issue = jira.issue(JIRA_ID)
 
@@ -529,8 +587,26 @@ try:
 except:
 	print "Network connectivity check failed. Please ensure that you are connected to splunk VPN"
 	exit(1)
-try:
-	main()
-	print "\nYou are welcome! :)"
-except:
-	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
+#try:
+main()
+if IS_CW == 1:
+	sys.stdout.write("\nThis stack is CloudWorks stack. Do you want to add cloudworks label to the JIRA issue? (y/n):")
+	_input = raw_input()
+	if _input.lower() == 'y':
+		if JIRA_ID == "":
+			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345)? (y/n):")
+			JIRA_ID = raw_input()
+		options = {'server': jira_server, 'verify':False}
+		_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
+		_issue = _jira.issue(JIRA_ID)
+		labels = _issue.fields.labels
+		if u"cloudworks" not in labels:
+			_issue.fields.labels.append(u'cloudworks')
+			_issue.update(fields={'labels': _issue.fields.labels})
+			print "Label added successfully!"
+		else:
+			print "Label already avilable!"
+
+print "\nYou are welcome! :)"
+#except:
+#	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
