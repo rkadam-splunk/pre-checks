@@ -561,7 +561,7 @@ def main():
 
 		if appcert_flg == 1:
 			print "Gone through below JIRA to get the remaining APPCERT JIRA"
-			sys.stdout.write("Enter the issue app install JIRA ID (CO-12345): ")
+			sys.stdout.write("Enter the app install JIRA ID (CO-12345): ")
 			JIRA_ID = raw_input()
 			issue = jira.issue(JIRA_ID)
 
