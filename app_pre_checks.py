@@ -434,7 +434,7 @@ def main():
 						installed,restart_req,current_ver = get_install_status(folder_name,value)
 						if installed == "yes":
 							print " - *The app "+APP_ID+" is already installed on "+key+" SH with "+current_ver+" version.*"
-							print " - need Splunk restart after installation: "+restart_req
+							print " - need Splunk restart after upgrade: "+restart_req
 						else:
 							print " - Is it already installed on "+key+" SH: No"
 				
@@ -540,7 +540,7 @@ def main():
 										installed,restart_req,current_ver = get_install_status(folder_name,value)
 										if installed == "yes":
 											print "\t*The app "+_id+" is already installed on "+key+" SH with "+current_ver+" version.*"
-											print "\tneed Splunk restart after installation: "+restart_req
+											print "\tneed Splunk restart after upgrade: "+restart_req
 										else:
 											print "\tIs it already installed on "+key+" SH: No"
 
@@ -594,7 +594,7 @@ if IS_CW == 1:
 	_input = raw_input()
 	if _input.lower() == 'y':
 		if JIRA_ID == "":
-			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345)? (y/n):")
+			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
 			JIRA_ID = raw_input()
 		options = {'server': jira_server, 'verify':False}
 		_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
