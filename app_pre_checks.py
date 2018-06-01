@@ -419,7 +419,7 @@ def main():
 			folder_name, _status = self_service_check(APP_ID)
 			if "ERROR" not in _status:
 				if _status == "appmgmt_phase":
-					print " - *The app supports self-service installation"
+					print " - *The app supports self-service installation*"
 				elif _status == "assisted":
 					print " - self-service installation: No"
 				elif _status == "unknown":
@@ -527,7 +527,7 @@ def main():
 								folder_name, _status = self_service_check(APP_ID)
 								if "ERROR" not in _status:
 									if _status == "appmgmt_phase":
-										print "\t*The app supports self-service installation"
+										print "\t*The app supports self-service installation*"
 									elif _status == "assisted":
 										print "\tself-service installation: No"
 									elif _status == "unknown":
