@@ -587,26 +587,26 @@ try:
 except:
 	print "Network connectivity check failed. Please ensure that you are connected to splunk VPN"
 	exit(1)
-#try:
-main()
-if IS_CW == 1:
-	sys.stdout.write("\nThis stack is CloudWorks stack. Do you want to add cloudworks label to the JIRA issue? (y/n):")
-	_input = raw_input()
-	if _input.lower() == 'y':
-		if JIRA_ID == "":
-			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
-			JIRA_ID = raw_input()
-		options = {'server': jira_server, 'verify':False}
-		_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-		_issue = _jira.issue(JIRA_ID)
-		labels = _issue.fields.labels
-		if u"cloudworks" not in labels:
-			_issue.fields.labels.append(u'cloudworks')
-			_issue.update(fields={'labels': _issue.fields.labels})
-			print "Label added successfully!"
-		else:
-			print "Label already avilable!"
+try:
+	main()
+	if IS_CW == 1:
+		sys.stdout.write("\nThis stack is CloudWorks stack. Do you want to add cloudworks label to the JIRA issue? (y/n):")
+		_input = raw_input()
+		if _input.lower() == 'y':
+			if JIRA_ID == "":
+				sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
+				JIRA_ID = raw_input()
+			options = {'server': jira_server, 'verify':False}
+			_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
+			_issue = _jira.issue(JIRA_ID)
+			labels = _issue.fields.labels
+			if u"cloudworks" not in labels:
+				_issue.fields.labels.append(u'cloudworks')
+				_issue.update(fields={'labels': _issue.fields.labels})
+				print "Label added successfully!"
+			else:
+				print "Label already avilable!"
 
-print "\nYou are welcome! :)"
-#except:
-#	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
+	print "\nYou are welcome! :)"
+except:
+	print "Some error occured: check the variables in variables.py verify if the Splunk VPN is connected or you have killed it"
