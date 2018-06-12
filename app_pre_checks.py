@@ -524,7 +524,7 @@ def main():
 							else:
 								print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
 							if PASSWORD != "###":
-								folder_name, _status = self_service_check(APP_ID)
+								folder_name, _status = self_service_check(_id)
 								if "ERROR" not in _status:
 									if _status == "appmgmt_phase":
 										print "\t*The app supports self-service installation*"
