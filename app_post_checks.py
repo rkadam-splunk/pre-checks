@@ -4,10 +4,10 @@
 # Date:    4th Mar 2018                                                                     #
 # Version: 2.0                                                                              #
 # Help:-                                                                                    #
-# python app_pre_checks.py --app-ids 1234,5678 --stack abcd                                 #
-# python app_pre_checks.py -ids 1234,5678 -s abcd                                           #
-# python app_pre_checks.py -h                                                               #
-# python app_pre_checks.py --help                                                           #
+# python app_post_checks.py --app-ids 1234,5678 --stack abcd                                 #
+# python app_post_checks.py -ids 1234,5678 -s abcd                                           #
+# python app_post_checks.py -h                                                               #
+# python app_post_checks.py --help                                                           #
 #                                                                                           #
 #############################################################################################
 
