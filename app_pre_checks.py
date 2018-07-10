@@ -600,7 +600,7 @@ except:
 main()
 sys.stdout.write("Do you want to add 'prechecked' label to the JIRA ticket? (y/n):")
 _input = raw_input()
-if _input.lower() == 'y':
+if _input.lower() != 'n':
 	if JIRA_ID == "":
 		sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
 		JIRA_ID = raw_input()
@@ -618,7 +618,7 @@ if _input.lower() == 'y':
 if IS_CW == 1:
 	sys.stdout.write("\nThis stack is CloudWorks stack. Do you want to add cloudworks label to the JIRA issue? (y/n):")
 	_input = raw_input()
-	if _input.lower() == 'y':
+	if _input.lower() != 'n':
 		if JIRA_ID == "":
 			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
 			JIRA_ID = raw_input()
