@@ -415,7 +415,7 @@ except:
 main()
 sys.stdout.write("Do you want to add 'Crest' label to the JIRA ticket? (y/n):")
 _input = raw_input()
-if _input.lower() == 'y':
+if _input.lower() != 'n':
 	if JIRA_ID == "":
 		sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
 		JIRA_ID = raw_input()
