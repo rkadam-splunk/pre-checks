@@ -23,12 +23,12 @@ from variables import *
 
 warnings.filterwarnings("ignore")
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-ids','--app-ids', help='App id', required=False)
 parser.add_argument('-s','--stack', help='Stack name', required=True)
 args = parser.parse_args()
  
-
 APP_IDS=args.app_ids
 APP_VS={}
 STACK=args.stack
@@ -38,6 +38,7 @@ APP_IDSS = []
 ERROR = []
 
 SHs = {}
+
 
 jira_server = JIRA_SERVER
 jira_user = AD_USER
@@ -177,16 +178,6 @@ def check_on_splunkbase(app_id,app_v):
 	else:
 		return "ERROR_404"
 
-def check_on_1sot(app_id,app_v):
-
-	postfixs = [".zip",".tgz",".tar.gz",".tar",".spl"]
-	for postfix in postfixs:
-		url="http://1sot.splunkcloud.com/artifactory/splunk-general/prod/apps/"+app_id+"_"+app_v+postfix
-		status_code,app_size = get_status_code_and_size(url.encode('utf-8'))
-		if status_code==200:
-			return postfix
-	return "not"
-
 def get_stack_password():
 	if IS_CW == 0:
 		vault = Vault(ANSIBLE_VAULT)
@@ -210,6 +201,7 @@ def get_stack_password():
 		return "ERROR_CW"
 
 PASSWORD = get_stack_password()
+print PASSWORD
 if "ERROR" in PASSWORD:
 	PASSWORD = "###"
 	print "Couldn't fetch the stack password - Could be CloudWorks stack"
@@ -394,47 +386,9 @@ def main():
 		checked_app_ids = []
 		for APP_ID in APP_IDSS:
 			APP_V = APP_VS[APP_ID]
-			print "*+Pre-checks for "+APP_ID+" v"+APP_V+"+*"
 
-			tmp = check_on_1sot(APP_ID,APP_V)
-			if tmp != "not":
-				print " - 1sot: ",APP_ID+"_"+APP_V+tmp
-			else:
-				print " - The app "+APP_ID+" v"+APP_V+" is not available on 1sot"
-				ERROR.append("1SOT")
-
-			appcert_f = 0
-
-			options = {'server': jira_server, 'verify':False}
-			jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-			query = 'project = APPCERT AND status = Closed AND resolution = "Fixed" AND text ~ "'+APP_ID+' v'+APP_V+'"'
-			issues = jira.search_issues(query)
-
-			if len(issues) != 0:
-				for issue in issues:
-					print " - APPCERT: ",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
-					appcert_f = 1
-
-			if appcert_f == 0:
-				print "*Automation failed to find APPCERT JIRA*"
-				ERROR.append("APPCERT")
-				appcert_flg = 1
-			splunkbase = check_on_splunkbase(APP_ID,APP_V)
-			if splunkbase != "ERROR_404":
-				print " - Splunk-Base: available"
-				print " - Supported Splunk versions: ",splunkbase
-			else:
-				print " - The app "+APP_ID+" v"+APP_V+" is not available on Splunk-Base"
 			folder_name, _status = self_service_check(APP_ID)
-			if "ERROR" not in _status:
-				if _status == "appmgmt_phase":
-					print " - *The app supports self-service installation*"
-				elif _status == "assisted":
-					print " - self-service installation: No"
-				elif _status == "unknown":
-					print " - *This app is not yet vetted to install on Splunk Cloud*"
-				elif _status == "rejected":
-					print " - *This app is not yet vetted to install on Splunk Cloud*"
+
 			if PASSWORD != "###":				
 				#folder_name = get_app_folder_name(APP_ID+"_"+APP_V+tmp)
 				if "ERROR" not in folder_name:
@@ -443,149 +397,9 @@ def main():
 						installed,restart_req,current_ver = get_install_status(folder_name,value)
 						if installed == "yes":
 							print " - *The app "+APP_ID+" is already installed on "+key+" SH with "+current_ver+" version.*"
-							print " - need Splunk restart after upgrade: "+restart_req
+							#print " - need Splunk restart after upgrade: "+restart_req
 						else:
 							print " - Is it already installed on "+key+" SH: No"
-				
-
-			url = CONFLUENCE_URL
-			api = Api(url, jira_user, jira_password)
-			text = api.getpagecontent("Splunk Cloud Apps Information List","CLOUDOPS")
-			soup = BeautifulSoup(text.encode("utf-8"),"html.parser")
-			ids=""
-
-			if len(soup.findAll("span"))!=0:
-				for span_tag in soup.findAll("span"):
-					if span_tag!= None and span_tag.find(text=True) != None:
-						tmp = span_tag.find(text=True)
-						span_tag.replace_with(tmp)
-
-			if len(soup.findAll("p"))!=0:
-				for span_tag in soup.findAll("p"):
-					if span_tag!= None and span_tag.find(text=True) != None:
-						tmp = span_tag.find(text=True)
-						span_tag.replace_with(tmp)
-
-			if len(soup.findAll("br"))!=0:
-				for span_tag in soup.findAll("br"):
-					if span_tag!= None and span_tag.find(text=True) != None:
-						tmp = span_tag.find(text=True)
-						span_tag.replace_with(tmp)
-
-
-
-
-			if len(soup.findAll("td",text=APP_ID))!=0:
-				for nodes in soup.findAll("td",text=APP_ID):
-					allnodes = nodes.parent.findAll(recursive=False)
-					if allnodes[0].find(text=True) == APP_ID:
-						print " - APP DETAILS"
-						print "\tApp-ID: ",allnodes[0].find(text=True).replace("&nbsp;", "")
-						sys.stdout.write("\tcan be installed on: ")
-						if allnodes[4].find(text=True) != None and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
-							sys.stdout.write("sh ")
-						if allnodes[5].find(text=True) != None and "true" in allnodes[5].find(text=True).replace("&nbsp;", "").lower():
-							sys.stdout.write("c0m1 ")
-						if allnodes[6].find(text=True) != None and "true" in allnodes[6].find(text=True).replace("&nbsp;", "").lower():
-							sys.stdout.write("hfw ")
-						if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
-							sys.stdout.write("ufw ")
-						print ""
-						if allnodes[12].find(text=True) != None  and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
-							print "\tdependent apps: ",allnodes[12].find(text=True).replace("&nbsp;", "")
-						if allnodes[12].find(text=True) != None:
-							ids = allnodes[12].find(text=True).replace("&nbsp;", "")
-			else:
-				print "*App is not available on confluence page*"
-
-			ids = ids.split('|')
-			for _id in ids:
-				_id = ''.join(c for c in _id if c.isdigit())
-				if len(soup.findAll("td",text=_id))!=0:
-					for nodes in soup.findAll("td",text=_id):
-						allnodes = nodes.parent.findAll(recursive=False)
-						if allnodes[0].find(text=True) == _id:
-							print " - APP DETAILS for dependent app ",_id
-							print "\tApp-ID: ",allnodes[0].find(text=True).replace("&nbsp;", "")
-							sys.stdout.write("\tcan be installed on: ")
-							if allnodes[4].find(text=True) != None  and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("sh ")
-							if allnodes[5].find(text=True) != None and "true" in allnodes[5].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("c0m1 ")
-							if allnodes[6].find(text=True) != None and "true" in allnodes[6].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("hfw ")
-							if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("ufw ")
-							print ""
-							if allnodes[12].find(text=True) != None and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
-								print "\tdependent apps: ",allnodes[12].find(text=True).replace("&nbsp;", "")
-							_v = get_latest_version(_id)
-							print "\tlatest version: "+_v
-							splunkbase = check_on_splunkbase(_id,_v)
-							if splunkbase != "ERROR_404":
-								print "\tSplunk-Base: available"
-								print "\tSupported Splunk versions: ",splunkbase
-							else:
-								print "\tThe app "+_id+" v"+_v+" is not available on Splunk-Base"
-							tmp = check_on_1sot(_id,_v)
-							if tmp != "not":
-								print "\t1sot: ",_id+"_"+_v+tmp
-							else:
-								print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
-							if PASSWORD != "###":
-								folder_name, _status = self_service_check(_id)
-								if "ERROR" not in _status:
-									if _status == "appmgmt_phase":
-										print "\t*The app supports self-service installation*"
-									elif _status == "assisted":
-										print "\tself-service installation: No"
-									elif _status == "unknown":
-										print "\t*This app is not yet vetted to install on Splunk Cloud*"
-									elif _status == "rejected":
-										print "\t*This app is not yet vetted to install on Splunk Cloud*"
-								if "ERROR" not in folder_name:
-									print "\tApp directory name: ",folder_name
-									for key, value in SHs.iteritems():
-										installed,restart_req,current_ver = get_install_status(folder_name,value)
-										if installed == "yes":
-											print "\t*The app "+_id+" is already installed on "+key+" SH with "+current_ver+" version.*"
-											print "\tneed Splunk restart after upgrade: "+restart_req
-										else:
-											print "\tIs it already installed on "+key+" SH: No"
-
-							appcert_f = 0
-							options = {'server': jira_server}
-							jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-							query = 'project = APPCERT AND status = Closed AND resolution = "Fixed" AND text ~ "'+_id+' v'+_v+'"'
-							issues = jira.search_issues(query)
-							if len(issues) != 0:
-								for issue in issues:
-									print "\tAPPCERT: ",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
-									appcert_f = 1
-							if appcert_f == 0:
-								print "\t*Automation failed to find APPCERT JIRA for dependent app",_id+"*"
-				else:
-					print "*dependent app is not available on confluence page*"
-			print ""
-
-		if appcert_flg == 1:
-			print "Gone through below JIRA to get the remaining APPCERT JIRA"
-			sys.stdout.write("Enter the app install JIRA ID (CO-12345): ")
-			JIRA_ID = raw_input()
-			issue = jira.issue(JIRA_ID)
-
-			for link in issue.fields.issuelinks:
-			#print link.key
-				if hasattr(link, "outwardIssue"):
-					outwardIssue = link.outwardIssue
-					print "\t",outwardIssue.key+" "+outwardIssue.fields.summary.__str__()
-					print "\tstatus: ",outwardIssue.fields.status,"\tresolution: ",jira.issue(outwardIssue.key).fields.resolution.__str__()
-					print ""
-				if hasattr(link, "inwardIssue"):
-					inwardIssue = link.inwardIssue
-					print "\t",inwardIssue.key+" "+inwardIssue.fields.summary.__str__()
-					print "\tstatus: ",inwardIssue.fields.status,"\tresolution: ",jira.issue(inwardIssue.key).fields.resolution.__str__()
-					print ""
 
 
 print "It's on the way!\n"
@@ -598,7 +412,7 @@ except:
 	exit(1)
 #try:
 main()
-sys.stdout.write("Do you want to add 'prechecked' label to the JIRA ticket? (y/n):")
+sys.stdout.write("Do you want to add 'Crest' label to the JIRA ticket? (y/n):")
 _input = raw_input()
 if _input.lower() == 'y':
 	if JIRA_ID == "":
@@ -608,30 +422,12 @@ if _input.lower() == 'y':
 	_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
 	_issue = _jira.issue(JIRA_ID)
 	labels = _issue.fields.labels
-	if u"prechecked" not in (l.lower() for l in labels):
-		_issue.fields.labels.append(u'prechecked')
+	if u"crest" not in (l.lower() for l in labels):
+		_issue.fields.labels.append(u'Crest')
 		_issue.update(fields={'labels': _issue.fields.labels})
 		print "Label added successfully!"
 	else:
 		print "Label already avilable!"
-
-if IS_CW == 1:
-	sys.stdout.write("\nThis stack is CloudWorks stack. Do you want to add cloudworks label to the JIRA issue? (y/n):")
-	_input = raw_input()
-	if _input.lower() == 'y':
-		if JIRA_ID == "":
-			sys.stdout.write("\nEnter the app install JIRA issue id (CO-12345):")
-			JIRA_ID = raw_input()
-		options = {'server': jira_server, 'verify':False}
-		_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-		_issue = _jira.issue(JIRA_ID)
-		labels = _issue.fields.labels
-		if u"cloudworks" not in labels:
-			_issue.fields.labels.append(u'cloudworks')
-			_issue.update(fields={'labels': _issue.fields.labels})
-			print "Label added successfully!"
-		else:
-			print "Label already avilable!"
 
 print "\nYou are welcome! :)"
 #except:
