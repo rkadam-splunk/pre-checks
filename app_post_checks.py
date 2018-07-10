@@ -4,10 +4,10 @@
 # Date:    4th Mar 2018                                                                     #
 # Version: 2.0                                                                              #
 # Help:-                                                                                    #
-# python app_post_checks.py --app-ids 1234,5678 --stack abcd                                 #
-# python app_post_checks.py -ids 1234,5678 -s abcd                                           #
-# python app_post_checks.py -h                                                               #
-# python app_post_checks.py --help                                                           #
+# python app_post_checks.py --app-ids 1234,5678 --stack abcd                                #
+# python app_post_checks.py -ids 1234,5678 -s abcd                                          #
+# python app_post_checks.py -h                                                              #
+# python app_post_checks.py --help                                                          #
 #                                                                                           #
 #############################################################################################
 
@@ -334,7 +334,7 @@ def main():
 		answers = dns.resolver.query(STACK+'.splunkcloud.com', 'CNAME')
 		if "shc" not in answers[0].target[0]:
 			print " - adhoc sh: ", answers[0].target
-			SHs['adhoc'] = answers[0].target[0]
+			SHs['adhoc SH'] = answers[0].target[0]
 		else:
 			print "*"+STACK+'.splunkcloud.com '+"is pointing to SHC*"
 	except:
@@ -346,35 +346,35 @@ def main():
 		try:
 			answers = dns.resolver.query('es-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - es sh: ", answers[0].target
-			SHs['es'] = answers[0].target[0]
+			SHs['es SH'] = answers[0].target[0]
 		except:
 			print " - es sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('itsi-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - itsi sh: ", answers[0].target
-			SHs['itsi'] = answers[0].target[0]
+			SHs['itsi SH'] = answers[0].target[0]
 		except:
 			print " - itsi sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('vmware-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - vmware sh:", answers[0].target
-			SHs['vmware'] = answers[0].target[0]
+			SHs['vmware SH'] = answers[0].target[0]
 		except:
 			print " - vmware sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('pci-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - pci sh:", answers[0].target
-			SHs['pci'] = answers[0].target[0]
+			SHs['pci SH'] = answers[0].target[0]
 		except:
 			print " - pci sh: *DNS not available*"
 
 		try:
 			answers = dns.resolver.query('exchange-'+STACK+'.splunkcloud.com', 'CNAME')
 			print " - exchange sh:", answers[0].target
-			SHs['exchange'] = answers[0].target[0]
+			SHs['exchange SH'] = answers[0].target[0]
 		except:
 			print " - exchange sh: *DNS not available*"
 	print ""
@@ -400,7 +400,8 @@ def main():
 							#print " - need Splunk restart after upgrade: "+restart_req
 						else:
 							print " - Is it already installed on "+key+" SH: No"
-
+					print ""
+					print ""
 
 print "It's on the way!\n"
 page = ""
