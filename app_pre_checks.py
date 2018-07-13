@@ -265,16 +265,17 @@ def get_install_status(folder_name,sh):
 			installed = 'yes'
 			restart_req = res[u'entry'][0][u'content'][u'state_change_requires_restart'].__str__()
 			current_ver = res[u'entry'][0][u'content'][u'version'].__str__()
-			return installed,restart_req,current_ver
+			install_method = res[u'entry'][0][u'content'][u'managed_by_deployment_client'].__str__()
+			return installed,restart_req,current_ver,install_method
 		elif result.status == 401:
-			return "ERROR_auth","ERROR_auth","ERROR_auth"
+			return "ERROR_auth","ERROR_auth","ERROR_auth","ERROR_auth"
 		elif result.status == 404:
-			return "ERROR_404","ERROR_404","ERROR_404"
+			return "ERROR_404","ERROR_404","ERROR_404","ERROR_404"
 		else:
-			return "ERROR","ERROR","ERROR"
+			return "ERROR","ERROR","ERROR","ERROR"
 	except:
 		print "Internal DNS entry invalid: internal-"+sh+"."+STACK+".splunkcloud.com or 8089 port is not UP"
-		return "ERROR","ERROR","ERROR"
+		return "ERROR","ERROR","ERROR","ERROR"
 
 def main():
 	global IS_CW
@@ -440,10 +441,14 @@ def main():
 				if "ERROR" not in folder_name:
 					print " - App directory name: ",folder_name
 					for key, value in SHs.iteritems():
-						installed,restart_req,current_ver = get_install_status(folder_name,value)
+						installed,restart_req,current_ver,install_method = get_install_status(folder_name,value)
 						if installed == "yes":
 							print " - *The app "+APP_ID+" is already installed on "+key+" with "+current_ver+" version.*"
-							print " - need Splunk restart after upgrade: "+restart_req
+							print " - need Splunk restart after upgrade?: "+restart_req
+							if install_method == "True":
+								print " - This app has been installed via self-service. *Do not upgrade on "+key+"*";
+							else:
+								print " - This app has been installed by Ops."
 						else:
 							print " - Is it already installed on "+key+" SH: No"
 				
@@ -500,73 +505,78 @@ def main():
 
 			ids = ids.split('|')
 			for _id in ids:
-				_id = ''.join(c for c in _id if c.isdigit())
-				if len(soup.findAll("td",text=_id))!=0:
-					for nodes in soup.findAll("td",text=_id):
-						allnodes = nodes.parent.findAll(recursive=False)
-						if allnodes[0].find(text=True) == _id:
-							print " - APP DETAILS for dependent app ",_id
-							print "\tApp-ID: ",allnodes[0].find(text=True).replace("&nbsp;", "")
-							sys.stdout.write("\tcan be installed on: ")
-							if allnodes[4].find(text=True) != None  and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("sh ")
-							if allnodes[5].find(text=True) != None and "true" in allnodes[5].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("c0m1 ")
-							if allnodes[6].find(text=True) != None and "true" in allnodes[6].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("hfw ")
-							if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
-								sys.stdout.write("ufw ")
-							print ""
-							if allnodes[12].find(text=True) != None and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
-								print "\tdependent apps: ",allnodes[12].find(text=True).replace("&nbsp;", "")
-							_v = get_latest_version(_id)
-							print "\tlatest version: "+_v
-							splunkbase = check_on_splunkbase(_id,_v)
-							if splunkbase != "ERROR_404":
-								print "\tSplunk-Base: available"
-								print "\tSupported Splunk versions: ",splunkbase
-							else:
-								print "\tThe app "+_id+" v"+_v+" is not available on Splunk-Base"
-							tmp = check_on_1sot(_id,_v)
-							if tmp != "not":
-								print "\t1sot: ",_id+"_"+_v+tmp
-							else:
-								print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
-							if PASSWORD != "###":
-								folder_name, _status = self_service_check(_id)
-								if "ERROR" not in _status:
-									if _status == "appmgmt_phase":
-										print "\t*The app supports self-service installation*"
-									elif _status == "assisted":
-										print "\tself-service installation: No"
-									elif _status == "unknown":
-										print "\t*This app is not yet vetted to install on Splunk Cloud*"
-									elif _status == "rejected":
-										print "\t*This app is not yet vetted to install on Splunk Cloud*"
-								if "ERROR" not in folder_name:
-									print "\tApp directory name: ",folder_name
-									for key, value in SHs.iteritems():
-										installed,restart_req,current_ver = get_install_status(folder_name,value)
-										if installed == "yes":
-											print "\t*The app "+_id+" is already installed on "+key+" SH with "+current_ver+" version.*"
-											print "\tneed Splunk restart after upgrade: "+restart_req
-										else:
-											print "\tIs it already installed on "+key+" SH: No"
+				if _id not in APP_IDSS:
+					_id = ''.join(c for c in _id if c.isdigit())
+					if len(soup.findAll("td",text=_id))!=0:
+						for nodes in soup.findAll("td",text=_id):
+							allnodes = nodes.parent.findAll(recursive=False)
+							if allnodes[0].find(text=True) == _id:
+								print " - APP DETAILS for dependent app ",_id
+								print "\tApp-ID: ",allnodes[0].find(text=True).replace("&nbsp;", "")
+								sys.stdout.write("\tcan be installed on: ")
+								if allnodes[4].find(text=True) != None  and "true" in allnodes[4].find(text=True).replace("&nbsp;", "").lower():
+									sys.stdout.write("sh ")
+								if allnodes[5].find(text=True) != None and "true" in allnodes[5].find(text=True).replace("&nbsp;", "").lower():
+									sys.stdout.write("c0m1 ")
+								if allnodes[6].find(text=True) != None and "true" in allnodes[6].find(text=True).replace("&nbsp;", "").lower():
+									sys.stdout.write("hfw ")
+								if allnodes[7].find(text=True) != None and "true" in allnodes[7].find(text=True).replace("&nbsp;", "").lower():
+									sys.stdout.write("ufw ")
+								print ""
+								if allnodes[12].find(text=True) != None and allnodes[12].find(text=True).replace("&nbsp;", "").strip().replace(" ","") != "":
+									print "\tdependent apps: ",allnodes[12].find(text=True).replace("&nbsp;", "")
+								_v = get_latest_version(_id)
+								print "\tlatest version: "+_v
+								splunkbase = check_on_splunkbase(_id,_v)
+								if splunkbase != "ERROR_404":
+									print "\tSplunk-Base: available"
+									print "\tSupported Splunk versions: ",splunkbase
+								else:
+									print "\tThe app "+_id+" v"+_v+" is not available on Splunk-Base"
+								tmp = check_on_1sot(_id,_v)
+								if tmp != "not":
+									print "\t1sot: ",_id+"_"+_v+tmp
+								else:
+									print "\tThe app "+_id+" v"+_v+" is not available on 1sot"
+								if PASSWORD != "###":
+									folder_name, _status = self_service_check(_id)
+									if "ERROR" not in _status:
+										if _status == "appmgmt_phase":
+											print "\t*The app supports self-service installation*"
+										elif _status == "assisted":
+											print "\tself-service installation: No"
+										elif _status == "unknown":
+											print "\t*This app is not yet vetted to install on Splunk Cloud*"
+										elif _status == "rejected":
+											print "\t*This app is not yet vetted to install on Splunk Cloud*"
+									if "ERROR" not in folder_name:
+										print "\tApp directory name: ",folder_name
+										for key, value in SHs.iteritems():
+											installed,restart_req,current_ver,install_method = get_install_status(folder_name,value)
+											if installed == "yes":
+												print "\t*The app "+_id+" is already installed on "+key+" SH with "+current_ver+" version.*"
+												print "\tneed Splunk restart after upgrade: "+restart_req
+												if install_method == "True":
+													print "\tThis app has been installed via self-service. *Do not upgrade on "+key+"*";
+												else:
+													print "\tThis app has been installed by Ops."
+											else:
+												print "\tIs it already installed on "+key+" SH: No"
 
-							appcert_f = 0
-							options = {'server': jira_server}
-							jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
-							query = 'project = APPCERT AND status = Closed AND resolution = "Fixed" AND text ~ "'+_id+' v'+_v+'"'
-							issues = jira.search_issues(query)
-							if len(issues) != 0:
-								for issue in issues:
-									print "\tAPPCERT: ",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
-									appcert_f = 1
-							if appcert_f == 0:
-								print "\t*Automation failed to find APPCERT JIRA for dependent app",_id+"*"
-				else:
-					print "*dependent app is not available on confluence page*"
-			print ""
+								appcert_f = 0
+								options = {'server': jira_server}
+								jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
+								query = 'project = APPCERT AND status = Closed AND resolution = "Fixed" AND text ~ "'+_id+' v'+_v+'"'
+								issues = jira.search_issues(query)
+								if len(issues) != 0:
+									for issue in issues:
+										print "\tAPPCERT: ",issue.__str__()+", status: "+issue.fields.status.__str__()+", resolution: ", issue.fields.resolution.__str__()
+										appcert_f = 1
+								if appcert_f == 0:
+									print "\t*Automation failed to find APPCERT JIRA for dependent app",_id+"*"
+					else:
+						print "*dependent app is not available on confluence page*"
+				print ""
 
 		if appcert_flg == 1:
 			print "Gone through below JIRA to get the remaining APPCERT JIRA"

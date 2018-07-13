@@ -257,16 +257,17 @@ def get_install_status(folder_name,sh):
 			installed = 'yes'
 			restart_req = res[u'entry'][0][u'content'][u'state_change_requires_restart'].__str__()
 			current_ver = res[u'entry'][0][u'content'][u'version'].__str__()
-			return installed,restart_req,current_ver
+			install_method = current_ver = res[u'entry'][0][u'content'][u'managed_by_deployment_client'].__str__()
+			return installed,restart_req,current_ver,install_method
 		elif result.status == 401:
-			return "ERROR_auth","ERROR_auth","ERROR_auth"
+			return "ERROR_auth","ERROR_auth","ERROR_auth","ERROR_auth"
 		elif result.status == 404:
-			return "ERROR_404","ERROR_404","ERROR_404"
+			return "ERROR_404","ERROR_404","ERROR_404","ERROR_404"
 		else:
-			return "ERROR","ERROR","ERROR"
+			return "ERROR","ERROR","ERROR","ERROR"
 	except:
 		print "Internal DNS entry invalid: internal-"+sh+"."+STACK+".splunkcloud.com or 8089 port is not UP"
-		return "ERROR","ERROR","ERROR"
+		return "ERROR","ERROR","ERROR","ERROR"
 
 def main():
 	global IS_CW
@@ -398,10 +399,15 @@ def main():
 						if installed == "yes":
 							print " - *The app "+APP_ID+" is already installed on "+key+" SH with "+current_ver+" version.*"
 							#print " - need Splunk restart after upgrade: "+restart_req
+							if install_method == "true":
+								print " - This app has been installed via self-service. *Do not upgrade*"
+							else:
+								print " - This app has been installed by Ops."
 						else:
 							print " - Is it already installed on "+key+" SH: No"
 					print ""
 					print ""
+
 
 print "It's on the way!\n"
 page = ""
