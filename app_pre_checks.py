@@ -608,7 +608,7 @@ except:
 	exit(1)
 #try:
 main()
-sys.stdout.write("Do you want to add 'prechecked' label to the JIRA ticket? (y/n):")
+sys.stdout.write("Do you want to add 'precheck_complete' label to the JIRA ticket? (y/n):")
 _input = raw_input()
 if _input.lower() != 'n':
 	if JIRA_ID == "":
@@ -618,8 +618,8 @@ if _input.lower() != 'n':
 	_jira = JIRA(options=options, basic_auth=(jira_user, jira_password))
 	_issue = _jira.issue(JIRA_ID)
 	labels = _issue.fields.labels
-	if u"prechecked" not in (l.lower() for l in labels):
-		_issue.fields.labels.append(u'prechecked')
+	if u"precheck_complete" not in (l.lower() for l in labels):
+		_issue.fields.labels.append(u'precheck_complete')
 		_issue.update(fields={'labels': _issue.fields.labels})
 		print "Label added successfully!"
 	else:
